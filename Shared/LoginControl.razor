@@ -1,0 +1,25 @@
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@if (user.Identity.IsAuthenticated)
+{
+    <b>You are logged in as: @user.Identity.Name </b>
+    <a class="ml-md-auto btn btn-primary"
+       href="/Logout"
+       target="_top">Logout</a>
+}
+else
+{
+    <a class="ml-md-auto btn btn-primary"
+       href="/Login"
+       target="_top">Login</a>
+}
+@code {
+    private ClaimsPrincipal? user;
+    protected override async void OnInitialized()
+    {
+        base.OnInitialized();
+        // Set the user to determine if they are logged in
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+    }
+}

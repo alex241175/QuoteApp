@@ -1,0 +1,83 @@
+<div class="mt-4">
+    <ul class="pagination">
+
+        @if (ShowFirst)
+        {
+            <li class="page-item">
+                <a @onclick="() => Load(1)" class="btn page-link">&lt;&lt;</a>
+            </li>
+        }
+
+        @if (ShowPrevious)
+        {
+            <li class="page-item">
+                <a @onclick="() => Load(CurrentPage -1)" class="btn page-link">&lt;</a>
+            </li>
+        }
+        @foreach(var p in PageRange)
+        {
+            @if(p > 0 && p <= TotalPages){
+                <li class="page-item @(p == CurrentPage ? "active" : "")">
+                    <a @onclick="()=> Load(p)" class="btn page-link">@p</a>
+                </li>
+            }
+        }
+        
+        <input class="mx-2" size="5" @bind="GoToPage" @onblur="()=> Load(Int16.Parse(GoToPage))" />
+
+        @if (ShowNext)
+        {
+            <li class="page-item">
+                <a @onclick="()=> Load(CurrentPage + 1)" class="btn page-link">></a>
+            </li>
+        }
+
+        @if (ShowLast)
+        {
+            <li class="page-item">
+                <a @onclick="()=> Load(TotalPages)" class="btn page-link">>></a>
+            </li>
+        }
+            <li class="mx-2 page-item"> Total : <span>@Count</span></li>
+    </ul>
+</div>
+
+@code{
+
+    [Parameter]
+    public int CurrentPage { get; set;}
+    [Parameter]
+    public int Count { get; set;}
+    [Parameter]
+    public int PageSize { get; set;}
+    [Parameter]
+    public int PageRangeSize { get; set;}
+    [Parameter]
+    public EventCallback<int> OnLoad {get;set;}
+
+    private string GoToPage = "";
+    private int TotalPages => (int)Math.Ceiling(decimal.Divide(Count, PageSize));
+    private bool ShowPrevious => CurrentPage > 1;
+    private bool ShowNext => CurrentPage < TotalPages;
+
+    private bool ShowFirst => CurrentPage != 1;
+    private bool ShowLast => CurrentPage != TotalPages;
+    private List<int> PageRange {
+        get{
+            int InitialNum = CurrentPage - PageRangeSize;
+            int LimitNum = (CurrentPage + PageRangeSize) + 1;
+            List<int> ls = new List<int>();
+            for (int i = InitialNum; i < LimitNum; i++ )
+            {
+                ls.Add(i);
+            }
+            return ls;
+        }
+    }
+
+    private Task Load(int PageNumber)
+    {
+        GoToPage = "";
+        return OnLoad.InvokeAsync(PageNumber);
+    }
+}

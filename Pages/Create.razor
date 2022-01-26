@@ -1,0 +1,91 @@
+@page "/create"
+@inject DatabaseContext DbContext
+@inject NavigationManager NavigationManager
+@inject IJSRuntime jsRuntime
+
+<PageTitle>語錄：新增</PageTitle>
+
+<h1>新增</h1>
+
+<form method="post">
+    <div class="form-group">
+        <label for="title" class="col-form-label">主題:</label>                            
+        <input type="text" class="form-control" id="title" @bind="Quote.Title" autocomplete="off">
+    </div>
+    <div class="form-group">
+        <label for="text" class="col-form-label">內容:</label>                            
+        <div class="grow-wrap">
+            <textarea class="form-control" id="text" @bind="Quote.Text" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="source" class="col-form-label">出處:</label>                            
+        <input type="text" class="form-control" id="source" @bind="Quote.Source" autocomplete="off">
+    </div>
+    <div class="form-group">
+        <label for="note" class="col-form-label">備註:</label>                            
+        <div class="grow-wrap">
+            <textarea class="form-control" id="note" @bind="Quote.Note" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <HxInputTags Label="Tags" @bind-Value="tagsInput"
+              DataProvider="GetNewItemSuggestions"
+			 SuggestDelay="0"
+			 SuggestMinimumLength="0" />
+    </div>
+    <div class="form-group">
+        <label for="private" class="col-form-label">保密:</label>                            
+        <input class="form-check-input" type="checkbox" checked="@Quote.Private" @onclick="CheckChanged">
+    </div>
+    <div class="form-group">
+        <button type="button" class="btn btn-primary" @onclick=@Save>Save</button>
+        <button type="button" class="btn btn-primary" @onclick=@Cancel>Cancel</button>
+    </div>
+</form>
+
+@code{
+
+    private Quote Quote {get;set;} = new Quote();
+    private List<string> tagsInput = new List<string>{};
+
+    private Task<InputTagsDataProviderResult> GetNewItemSuggestions(InputTagsDataProviderRequest request)
+	{
+		string tagsLine = string.Join(",", DbContext.Quotes.Select(x => x.Tags));  //output : green,red,green,yellow
+
+        return Task.FromResult(new InputTagsDataProviderResult()
+		{
+            Data = tagsLine.Split(",").ToList().Distinct().AsEnumerable()
+		});
+	}
+    protected override void OnInitialized()
+    {
+       
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+           //trigger oninput event of text inputbox to expand the textarea
+           await jsRuntime.InvokeVoidAsync("triggerinput", "text");
+           await jsRuntime.InvokeVoidAsync("triggerinput", "note");  
+        }
+    }
+    private void CheckChanged()
+    {
+        Quote.Private = !Quote.Private;
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/");       
+    }
+    private async Task Save()
+    {
+        Quote.Tags = string.Join(",", tagsInput);
+        Quote.Created = DateTime.Now;
+        await DbContext.Quotes.AddAsync(Quote);
+        await DbContext.SaveChangesAsync();
+        NavigationManager.NavigateTo("/");
+    }
+}

@@ -1,0 +1,52 @@
+﻿@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">QuoteApp</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> 主頁
+            </NavLink>
+              <NavLink class="nav-link" href="import">
+                <span class="oi oi-data-transfer-upload" aria-hidden="true"></span> 上傳
+            </NavLink>
+        </div>
+        <div class="nav-item px-3 d-block d-sm-none">
+             @if (user.Identity.Name != null){
+                <NavLink class="nav-link" href="logout">
+                    Logout
+                </NavLink>
+             }else{
+                 <NavLink class="nav-link" href="login">
+                    Login
+                </NavLink>
+             }
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+    private ClaimsPrincipal? user;
+    protected override async void OnInitialized()
+    {
+        base.OnInitialized();
+        // Set the user to determine if they are logged in
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        user = authState.User;
+    }
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

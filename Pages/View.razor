@@ -1,0 +1,51 @@
+@page "/view/{id:int}"
+@inject DatabaseContext DbContext
+@inject NavigationManager NavigationManager
+
+<PageTitle>語錄:@Quote.Title</PageTitle>
+
+<a class="btn btn-primary" href="/">&lt;</a>
+<button type="button" style="float:right" class="btn btn-primary mx-2" @onclick=@Edit>修改</button>
+<button type="button" style="float:right" class="btn btn-primary" @onclick=@Delete>刪除</button>
+
+<h3 class="mt-4">@Quote.Title</h3>
+<span>@Quote.Created.Value.ToString("dd/MM/yy h:mm tt")</span>
+
+@if(!string.IsNullOrEmpty(Quote.Tags)){
+    @foreach (var t in Quote.Tags.Split(",")){
+        <span class="badge bg-secondary mx-1">@t</span>
+    }
+}
+
+<span class="badge bg-light text-dark">@(Quote.Private? "保密":"")</span>
+<p>@Quote.Source</p>
+<p style="white-space: pre-wrap;">@Quote.Text</p>
+<p>@Quote.Note</p>
+
+
+
+@code{
+
+    private Quote Quote = new Quote(){};
+    [Parameter]
+    public int Id {get;set;}
+
+    protected override async Task OnInitializedAsync()
+    {
+        Quote = await DbContext.Quotes.FindAsync(Id);       
+    }
+
+    private void Edit()
+    {
+        NavigationManager.NavigateTo("/edit/" + Id);
+    }
+
+    private async Task Delete()
+    {
+        DbContext.Quotes.Remove(Quote);
+        await DbContext.SaveChangesAsync();
+        NavigationManager.NavigateTo("/");
+    }
+
+
+}

@@ -1,0 +1,62 @@
+@page "/import"
+@using ExcelDataReader
+@inject DatabaseContext DbContext
+
+<h3>Import Quotes </h3>
+
+<p>@Message</p>
+
+<form @onsubmit="OnSubmit">
+    <InputFile OnChange="OnInputFileChange" multiple />
+    <br /><br />
+    <button type="submit">Upload</button>
+</form>
+
+@code{
+
+    string Message = "No file(s) selected";
+    IReadOnlyList<IBrowserFile> selectedFiles;
+
+    private void OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        selectedFiles = e.GetMultipleFiles();
+        Message = $"{selectedFiles.Count} file(s) selected";
+        this.StateHasChanged();
+    }
+    private async void OnSubmit()
+    {
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+            
+        using (var stream = new MemoryStream())
+        {
+            await selectedFiles[0].OpenReadStream().CopyToAsync(stream);
+            stream.Position = 0;
+            bool IsFirstRow = true;
+            int n = 0;
+            using (var reader = ExcelReaderFactory.CreateReader(stream))
+            {
+                while (reader.Read()) //Each row of the file
+                {
+                    if (!IsFirstRow && !string.IsNullOrEmpty(reader.GetValue(0).ToString())){
+                        Quote quote = new Quote {
+                            Title = reader.GetValue(0).ToString().Trim() ,
+                            Source = reader.GetValue(1) != null ? reader.GetValue(1).ToString().Trim() : "",
+                            Text = reader.GetValue(2) != null ? reader.GetValue(2).ToString().Trim()  : "",
+                            Note = reader.GetValue(3) != null ? reader.GetValue(3).ToString().Trim()  : "",
+                            Tags = reader.GetValue(4) != null ? reader.GetValue(4).ToString().Trim()  : "",
+                            Private = Convert.ToBoolean(reader.GetValue(5)),
+                            Created = DateTime.Now,
+                        };
+                        await DbContext.Quotes.AddAsync(quote);
+                        n++;
+                    }
+                    if (IsFirstRow) IsFirstRow = false;
+                }
+            }
+            await DbContext.SaveChangesAsync();
+            Message = "Total records saved into Database : " + n;
+        }
+        this.StateHasChanged();
+    }
+
+}
