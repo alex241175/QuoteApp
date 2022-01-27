@@ -1,0 +1,39 @@
+@inject IJSRuntime jsRuntime
+@using Markdig
+
+<div class="row">
+    <div class="col">                            
+        <div class="grow-wrap">
+            <textarea class="form-control" @ref="textRef" value="@Text" @oninput="args => OnTextInput(textRef, args)"></textarea>
+        </div>
+    </div>
+    <div class="col">
+       <p style="white-space: pre-wrap;"> @((MarkupString) Preview) </p>
+    </div>
+</div>
+
+@code{
+
+    [Parameter]
+    public string Text { get; set;}
+    ElementReference textRef { get; set; }
+    public string Preview => Markdown.ToHtml(Text, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
+    [Parameter]
+    public EventCallback<string> TextChanged {get;set;}
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+           //trigger oninput event of text inputbox to expand the textarea
+           await jsRuntime.InvokeVoidAsync("replicateValue", textRef);   // auto expand textarea 
+        }
+    }
+    private async void OnTextInput(ElementReference textRef, ChangeEventArgs args)
+    {
+        Text = (string)args.Value; 
+        TextChanged.InvokeAsync(Text);      
+        await jsRuntime.InvokeVoidAsync("replicateValue", textRef);   // auto expand textarea
+    }
+
+}

@@ -7,6 +7,8 @@ using Havit.Blazor.Components.Web;
 using Havit.Blazor.Components.Web.Bootstrap;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.Authentication;
+using QuoteApp.Service;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -16,6 +18,8 @@ builder.Services.AddHxServices();
 // builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlite(builder.Configuration.GetConnectionString("SqliteDb")));
 builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MSSQLDb")));
 builder.Services.AddSingleton<StateContainerService>();
+builder.Services.AddSingleton<HelperFunction>();
+
 
 // add google authentication
 builder.Services.AddAuthentication("Cookies").AddCookie(opt =>

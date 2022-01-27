@@ -3,6 +3,8 @@
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject StateContainerService stateService
+@inject HelperFunction func
+@using MarkdownRemove
 
 <PageTitle>語錄：首頁</PageTitle>
 
@@ -44,12 +46,12 @@
                     </h5>
                         @if(string.IsNullOrEmpty(Query)){
                             @if(q.Text.Length > 100){
-                                <p>@(q.Text.Substring(0,100) + "...") </p>
+                                <p>@(markdownRemover.RemoveMarkdown(q.Text.Substring(0,100)) + "..." ) </p>
                             }else{
-                                <p>@q.Text</p>
+                                <p>@(markdownRemover.RemoveMarkdown(q.Text))</p>                                
                             }
                         }else{
-                            <p>@((MarkupString)GetMatchedSnippet(q.Text, Query))</p>
+                            <p>@(GetMatchedSnippet(markdownRemover.RemoveMarkdown(q.Text), Query))</p>
                         }
                     
                 </div>
@@ -71,6 +73,7 @@
     private ClaimsPrincipal? User;
     private string? Role;
     private string Query = "";
+    MarkdownRemover markdownRemover = new MarkdownRemover(); // To create a markdown remover with default options
     protected override async Task OnInitializedAsync()
     {
         Query = stateService.Query;

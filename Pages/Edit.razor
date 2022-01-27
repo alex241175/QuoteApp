@@ -15,9 +15,7 @@
     </div>
     <div class="form-group">
         <label for="text" class="col-form-label">內容:</label>
-        <div class="grow-wrap">
-            <textarea class="form-control" id="text" for="text" @bind="Quote.Text" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
-        </div>
+        <TextInput Text="@Quote.Text" TextChanged="TextChanged"></TextInput>
     </div>
     <div class="form-group">
         <label for="source" class="col-form-label">出處:</label>                            
@@ -74,13 +72,17 @@
         if (firstRender)
         {
            //trigger oninput event of text inputbox to expand the textarea
-           await jsRuntime.InvokeVoidAsync("triggerinput", "text");
            await jsRuntime.InvokeVoidAsync("triggerinput", "note");  
         }
     }
     private void CheckChanged()
     {
         Quote.Private = !Quote.Private;
+    }
+
+     private void TextChanged(string Text)
+    {
+        Quote.Text = Text;
     }
 
     private void Cancel()

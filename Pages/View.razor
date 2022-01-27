@@ -1,6 +1,7 @@
 @page "/view/{id:int}"
 @inject DatabaseContext DbContext
 @inject NavigationManager NavigationManager
+@using Markdig
 
 <PageTitle>語錄:@Quote.Title</PageTitle>
 
@@ -19,7 +20,8 @@
 
 <span class="badge bg-light text-dark">@(Quote.Private? "保密":"")</span>
 <p>@Quote.Source</p>
-<p style="white-space: pre-wrap;">@Quote.Text</p>
+<hr>
+<p style="white-space: pre-wrap;"> @((MarkupString) Preview) </p>
 <p>@Quote.Note</p>
 
 
@@ -29,6 +31,7 @@
     private Quote Quote = new Quote(){};
     [Parameter]
     public int Id {get;set;}
+    public string Preview => Markdown.ToHtml(Quote.Text, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
 
     protected override async Task OnInitializedAsync()
     {
