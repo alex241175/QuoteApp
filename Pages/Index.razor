@@ -8,59 +8,63 @@
 
 <PageTitle>語錄：首頁</PageTitle>
 
-@if (Role == "Admin"){
-    <form class="row">
-        <div class="col-auto">
-            <a class="btn btn-primary" href="Create">新增</a>
-        </div>
-        <div class="col-auto">
-            <div class="input-group">
-                <input class="form-control mx-2" @bind="Query" placeholder="查詢..." @onblur="@Search" />
-                @if(!string.IsNullOrEmpty(Tag)){
-                    <span class="mx-2"> filter : @Tag</span>
-                }
-                <button class="btn btn-outline-secondary" @onclick="@Cancel">X</button>
+<AuthorizeView Policy="IsAdmin">    
+    <Authorized> 
+        <form class="row">
+            <div class="col-auto">
+                <a class="btn btn-primary" href="Create">新增</a>
             </div>
-        </div>
-    </form>
-
-    @if (Quotes == null)
-    {
-        <p><em>Loading...</em></p>
-    }
-    else
-    {
-        @foreach (var q in Quotes)
-        {
-            <div class="card mt-2">
-                <div class="card-body">
-                    <h5 class="hand">
-                        <span @onclick="() => ViewQuote(q.QuoteId)">@q.Title</span>
-                        @if(!string.IsNullOrEmpty(q.Tags)){
-                            <small style="float:right;">
-                            @foreach (var t in q.Tags.Split(",")){
-                                <span class="badge bg-secondary mx-1" @onclick="()=> FilterByTag(t)">@t</span>
-                            }
-                            </small>
-                        }
-                    </h5>
-                        @if(string.IsNullOrEmpty(Query)){
-                            @if(q.Text.Length > 100){
-                                <p>@(markdownRemover.RemoveMarkdown(q.Text.Substring(0,100)) + "..." ) </p>
-                            }else{
-                                <p>@(markdownRemover.RemoveMarkdown(q.Text))</p>                                
-                            }
-                        }else{
-                            <p>@(GetMatchedSnippet(markdownRemover.RemoveMarkdown(q.Text), Query))</p>
-                        }
-                    
+            <div class="col-auto">
+                <div class="input-group">
+                    <input class="form-control mx-2" @bind="Query" placeholder="查詢..." @onblur="@Search" />
+                    @if(!string.IsNullOrEmpty(Tag)){
+                        <span class="mx-2"> filter : @Tag</span>
+                    }
+                    <button class="btn btn-outline-secondary" @onclick="@Cancel">X</button>
                 </div>
             </div>
-        }    
-        <Pagination CurrentPage="@CurrentPage" PageSize ="@PageSize" Count="@Count" PageRangeSize="@PageRangeSize" OnLoad="LoadPage"></Pagination>
-    }
-}
+        </form>
 
+        @if (Quotes == null)
+        {
+            <p><em>Loading...</em></p>
+        }
+        else
+        {
+            @foreach (var q in Quotes)
+            {
+                <div class="card mt-2">
+                    <div class="card-body">
+                        <h5 class="hand">
+                            <span @onclick="() => ViewQuote(q.QuoteId)">@q.Title</span>
+                            @if(!string.IsNullOrEmpty(q.Tags)){
+                                <small style="float:right;">
+                                @foreach (var t in q.Tags.Split(",")){
+                                    <span class="badge bg-light text-dark mx-1" @onclick="()=> FilterByTag(t)">@t</span>
+                                }
+                                </small>
+                            }
+                        </h5>
+                            @if(string.IsNullOrEmpty(Query)){
+                                @if(q.Text.Length > 100){
+                                    <p>@(markdownRemover.RemoveMarkdown(q.Text.Substring(0,100)) + "..." ) </p>
+                                }else{
+                                    <p>@(markdownRemover.RemoveMarkdown(q.Text))</p>                                
+                                }
+                            }else{
+                                <p>@(GetMatchedSnippet(markdownRemover.RemoveMarkdown(q.Text), Query))</p>
+                            }
+                        
+                    </div>
+                </div>
+            }    
+            <Pagination CurrentPage="@CurrentPage" PageSize ="@PageSize" Count="@Count" PageRangeSize="@PageRangeSize" OnLoad="LoadPage"></Pagination>
+        }
+    </Authorized>    
+    <NotAuthorized>    
+        <p>Please signed in.</p>    
+    </NotAuthorized>    
+</AuthorizeView>   
 
 @code{
 
@@ -81,9 +85,9 @@
         CurrentPage = stateService.Page;
         await LoadPage(CurrentPage);
         
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        @* var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         User = authState.User;
-        Role = User.Claims.Where(x => x.Type == ClaimTypes.Role).Select(x => x.Value).SingleOrDefault(); 
+        Role = User.Claims.Where(x => x.Type == ClaimTypes.Role).Select(x => x.Value).SingleOrDefault();  *@
 
     }
 

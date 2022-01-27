@@ -2,6 +2,7 @@
 @inject DatabaseContext DbContext
 @inject NavigationManager NavigationManager
 @inject IJSRuntime jsRuntime
+@attribute [Authorize(Policy = "IsAdmin")]  
 
 <PageTitle>語錄：修改</PageTitle>
 

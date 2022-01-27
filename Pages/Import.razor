@@ -1,16 +1,21 @@
 @page "/import"
 @using ExcelDataReader
 @inject DatabaseContext DbContext
+@attribute [Authorize(Policy = "IsAdmin")]  
 
-<h3>Import Quotes </h3>
+<AuthorizeView> 
+    <Authorized> 
+        <h3>Import Quotes </h3>
 
-<p>@Message</p>
+        <p>@Message</p>
 
-<form @onsubmit="OnSubmit">
-    <InputFile OnChange="OnInputFileChange" multiple />
-    <br /><br />
-    <button type="submit">Upload</button>
-</form>
+        <form @onsubmit="OnSubmit">
+            <InputFile OnChange="OnInputFileChange" multiple />
+            <br /><br />
+            <button type="submit">Upload</button>
+        </form>
+    </Authorized>
+</AuthorizeView>  
 
 @code{
 

@@ -37,6 +37,11 @@ builder.Services.AddAuthentication("Cookies").AddCookie(opt =>
 // add new claim - role
 builder.Services.AddScoped<IClaimsTransformation, UserInfoClaims>();
 
+builder.Services.AddAuthorization(config =>
+{
+    config.AddPolicy("IsAdmin", policy => policy.RequireClaim("Role","Admin"));
+});
+
 var app = builder.Build();
 
 
