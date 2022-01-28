@@ -22,7 +22,8 @@
 <span class="badge bg-light text-dark">@(Quote.Private? "保密":"")</span>
 <p>@Quote.Source</p>
 <hr>
-<p style="white-space: pre-wrap;"> @((MarkupString) Preview) </p>
+@* <p style="white-space: pre-wrap;"> @((MarkupString) Preview) </p> *@
+<p> @((MarkupString) Preview) </p>
 <p>@Quote.Note</p>
 
 

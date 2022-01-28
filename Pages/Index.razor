@@ -4,6 +4,7 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject StateContainerService stateService
 @inject HelperFunction func
+@inject IJSRuntime JS
 @using MarkdownRemove
 
 <PageTitle>語錄：首頁</PageTitle>
@@ -45,15 +46,17 @@
                                 </small>
                             }
                         </h5>
+                            <p class="hand" @onclick="() => ViewQuote(q.QuoteId)">
                             @if(string.IsNullOrEmpty(Query)){
                                 @if(q.Text.Length > 100){
-                                    <p>@(markdownRemover.RemoveMarkdown(q.Text.Substring(0,100)) + "..." ) </p>
+                                    @(markdownRemover.RemoveMarkdown(q.Text.Substring(0,100)) + "..." )
                                 }else{
-                                    <p>@(markdownRemover.RemoveMarkdown(q.Text))</p>                                
+                                    @(markdownRemover.RemoveMarkdown(q.Text))                              
                                 }
                             }else{
-                                <p>@(GetMatchedSnippet(markdownRemover.RemoveMarkdown(q.Text), Query))</p>
+                                @(GetMatchedSnippet(markdownRemover.RemoveMarkdown(q.Text), Query))
                             }
+                            </p>
                         
                     </div>
                 </div>
@@ -114,7 +117,15 @@
         Quotes = await quotes.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToListAsync();
 
     }
-    private void ViewQuote(int id){
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+           var scrollPos = stateService.ScrollPos;
+           await JS.InvokeVoidAsync("setScrollPos", scrollPos);   
+    }
+    private async Task ViewQuote(int id){
+        int scrollPos = await JS.InvokeAsync<int>("getScrollPos");
+        stateService.SetScrollPos(scrollPos);
         NavigationManager.NavigateTo("/view/" + id);
     }
 

@@ -11,3 +11,11 @@ window.replicateValue = function(element){
     element.parentNode.dataset.replicatedValue = element.value
 
 }
+
+window.getScrollPos = function(){
+    return window.scrollY
+}
+
+window.setScrollPos = function(scrollPos){
+    window.scrollTo(0, scrollPos)
+}

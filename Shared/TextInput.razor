@@ -1,6 +1,10 @@
 @inject IJSRuntime jsRuntime
 @using Markdig
 
+<label for="text" class="col-form-label">內容:</label>
+<a class="hand mx-2" @onclick="HandleShowClick">Markdown Syntax Quick</a>
+<a class="hand" href="https://www.markdownguide.org/cheat-sheet/">Markdown Syntax Cheatsheet</a>
+
 <div class="row">
     <div class="col">                            
         <div class="grow-wrap">
@@ -8,9 +12,33 @@
         </div>
     </div>
     <div class="col">
-       <p style="white-space: pre-wrap;"> @((MarkupString) Preview) </p>
+       <p> @((MarkupString) Preview) </p>
     </div>
 </div>
+
+<HxModal @ref="myModal" Size="ModalSize.Large" Fullscreen="ModalFullscreen.MediumDown" Title="Markdown syntax">
+	<BodyTemplate>
+        <pre>
+            Heading : add # in the front (put blank lines before and after)
+            Paragraph : create blank Line 
+            Line Break : end line with two space and type return
+            Emphasis : add asterisk before and after
+            Blockquotes : add > in front
+            Ordered List :  add 1.  2.  3.  in the front
+            Unordered List : add - * in the front
+            Horizontal Rules : *** or --- or ___
+            Links : [Links](https://duckukgo.com) or enclose URL in angle brackets
+            Escape characters : add \
+            Table : | Header | Description |  second row |------|-----|
+            Footnote : Here's a sentence with a footnote
+            Highlight : ==very important==
+
+        </pre>
+	</BodyTemplate>
+	<FooterTemplate>
+		<HxButton Text="Close" OnClick="HandleHideClick" Color="ThemeColor.Primary" />
+	</FooterTemplate>
+</HxModal>
 
 @code{
 
@@ -20,6 +48,18 @@
     public string Preview => Markdown.ToHtml(Text, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
     [Parameter]
     public EventCallback<string> TextChanged {get;set;}
+
+    private HxModal myModal;
+
+	private async Task HandleShowClick()
+	{
+		await myModal.ShowAsync();
+	}
+
+	private async Task HandleHideClick()
+	{
+		await myModal.HideAsync();
+	}
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

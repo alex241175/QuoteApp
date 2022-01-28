@@ -114,3 +114,21 @@ a, .btn-link {
     border-color: 0.15s ease-in-out;
     box-shadow: 0.15s ease-in-out; 
  }
+
+ .text-font {
+    font-family: PMingLiU;
+ }
+
+ strong {
+    color:blue;
+  }
+
+ em {
+    color:blue;
+    font-weight: bolder;
+    font-style: normal;
+ }
+
+ hand{
+     cursor: pointer;
+ }
