@@ -1,14 +1,18 @@
 @inject IJSRuntime jsRuntime
 @using Markdig
+@using Chinese
 
-<label for="text" class="col-form-label">內容:</label>
-<a class="hand mx-2" @onclick="HandleShowClick">Markdown Syntax Quick</a>
-<a class="hand" href="https://www.markdownguide.org/cheat-sheet/">Markdown Syntax Cheatsheet</a>
+<label for="text" class="col-form-label my-2">內容:</label>
+<a class="btn btn-light mx-2" @onclick="HandleShowClick">Markdown Syntax Quick</a>
+<a class="btn btn-light mx-2" href="https://www.markdownguide.org/cheat-sheet/">Cheatsheet</a>
+<a class="btn btn-light mx-2" @onclick="Beautify">整理</a>
+<a class="btn btn-light mx-2" @onclick="ConvertTraditional">繁</a>
 
 <div class="row">
     <div class="col">                            
         <div class="grow-wrap">
-            <textarea class="form-control" @ref="textRef" value="@Text" @oninput="args => OnTextInput(textRef, args)"></textarea>
+             @* <textarea class="form-control" @ref="textRef" value="@Text"></textarea> *@
+            <textarea class="form-control" @ref="textRef" value="@Text" @oninput="args => OnTextInput(textRef, args)"></textarea> 
         </div>
     </div>
     <div class="col">
@@ -61,6 +65,16 @@
 		await myModal.HideAsync();
 	}
 
+    private async Task Beautify()
+	{
+		Text = Text.Replace(",","，").Replace(";","；").Replace(":","：");  // 標點輔全型
+        TextChanged.InvokeAsync(Text);  
+	}
+   private async Task ConvertTraditional()
+	{
+		Text = ChineseConverter.ToTraditional(Text);
+        TextChanged.InvokeAsync(Text);  
+	}
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)

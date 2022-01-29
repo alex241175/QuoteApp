@@ -14,7 +14,7 @@
 <div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
     <nav class="flex-column">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+            <NavLink class="nav-link hand" href="" >
                 <span class="oi oi-home" aria-hidden="true"></span> 主頁
             </NavLink>
             <NavLink class="nav-link" href="import">
@@ -63,9 +63,15 @@
 
     private void FilterByTag(string tag)
     {
-        //stateService.SetTag(tag);
+        stateService.SetTag(tag);
         //stateService.SetQuery("");
         //stateService.SetPage(1); 
-        NavigationManager.NavigateTo("/list?tag="+tag, forceLoad: true);
+        //NavigationManager.NavigateTo("/list?tag="+tag, forceLoad: true);
+        stateService.FilterByTag();
     }
+
+    @* private void ReloadList()
+    {
+        stateService.ReloadList();
+    } *@
 }

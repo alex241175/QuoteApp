@@ -12,7 +12,7 @@ public class Quote
     public string Source {get;set;} = "";
     public string Note {get;set;} = "";
     public string Tags {get;set;} = "";
-    public DateTime? Created { get; set; }
+    public DateTime Created { get; set; }
     public bool Private{get;set;}
 
 }

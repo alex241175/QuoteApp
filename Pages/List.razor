@@ -27,7 +27,7 @@
             </div>
             <div class="col-auto">
             @if(!string.IsNullOrEmpty(Tag)){
-                <span class="mx-2 hand" @onclick='()=> FilterByTag("")'> filter : @Tag</span>
+                <span class="mx-2 hand" style="float:right;" @onclick='()=> FilterByTag("")'> tag : @Tag x</span>
             }
             </div>
         </div>
@@ -91,20 +91,22 @@
     
     protected override async Task OnInitializedAsync()
     {
-        StringValues tag;  
+        @* StringValues tag;  
         var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);  
         if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("tag", out tag))  
         {  
             stateService.SetTag(tag);
             stateService.SetQuery("");
             stateService.SetPage(1);
-        }  
+        }   *@
 
         Query = stateService.Query;        
         QueryString = Query;
         Tag = stateService.Tag;
         CurrentPage = stateService.Page;
-        stateService.OnStateChange += MyEventHandler;        
+        //stateService.OnStateChange += MyEventHandler;        
+        stateService.OnFilterByTag += OnFilterByTag;  //trigger from NavMenu
+        //stateService.OnReloadList += OnReloadList; //trigger from NavMenu
 
         await LoadPage(CurrentPage);
 
@@ -114,11 +116,26 @@
 
     }
 
-    private async void MyEventHandler()
+    private async void OnFilterByTag()
     {
         Console.WriteLine(stateService.Tag);    // can trigger
+        await FilterByTag(stateService.Tag);
+        StateHasChanged();
         //await LoadPage(CurrentPage);  // quite a lot of unexpected tourble
     }
+     @* private async void OnReloadList()
+    {
+        Console.WriteLine("Reloading list ...");    // can trigger
+        Tag = "";
+        stateService.SetTag(Tag);
+        Query = "";
+        QueryString ="";
+        stateService.SetQuery(Query);
+        CurrentPage = 1;
+        stateService.SetPage(CurrentPage); 
+        await LoadPage(CurrentPage);
+        StateHasChanged();
+    } *@
     private async Task LoadPage(int PageNumber){
         // var quotes = DbContext.Quotes.AsQueryable();
 
@@ -170,6 +187,7 @@
         Tag = tag;
         stateService.SetTag(Tag);
         Query = "";
+        QueryString ="";
         stateService.SetQuery(Query);
         CurrentPage = 1;
         stateService.SetPage(CurrentPage); 
@@ -198,11 +216,20 @@
                 index = Text.IndexOf(q);
             }
         }
-        return result;
+        if (string.IsNullOrEmpty(result)){
+            if(FullText.Length > 100){
+                return FullText.Substring(0,100) + "...";
+            }else{
+                return FullText;                              
+            }
+        } else{
+            return result;
+        }
     }
 
      public void Dispose()
     {
-        stateService.OnStateChange -= MyEventHandler;
+        stateService.OnFilterByTag -= OnFilterByTag;
+        //stateService.OnReloadList -= OnReloadList;
     }
 }

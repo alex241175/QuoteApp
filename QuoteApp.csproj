@@ -8,6 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Chinese" Version="0.4.6" />
+    <PackageReference Include="Chinese.Words" Version="0.0.1" />
     <PackageReference Include="ExcelDataReader" Version="3.6.0" />
     <PackageReference Include="Havit.Blazor.Components.Web.Bootstrap" Version="2.0.3" />
     <PackageReference Include="Markdig" Version="0.27.0" />

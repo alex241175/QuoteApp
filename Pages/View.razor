@@ -2,7 +2,8 @@
 @inject DatabaseContext DbContext
 @inject NavigationManager NavigationManager
 @using Markdig
-@attribute [Authorize(Policy = "IsAdmin")]  
+@attribute [Authorize(Policy = "IsAdmin")]
+@using System.Text.RegularExpressions
 
 <PageTitle>語錄:@Quote.Title</PageTitle>
 
@@ -11,7 +12,7 @@
 <button type="button" style="float:right" class="btn btn-primary" @onclick=@Delete>刪除</button>
 
 <h3 class="mt-4">@Quote.Title</h3>
-<span>@Quote.Created.Value.ToString("dd/MM/yy h:mm tt")</span>
+<span>@( Quote.Created.ToString("dd/MM/yy h:mm tt"))</span> 
 
 @if(!string.IsNullOrEmpty(Quote.Tags)){
     @foreach (var t in Quote.Tags.Split(",")){
@@ -20,7 +21,7 @@
 }
 
 <span class="badge bg-light text-dark">@(Quote.Private? "保密":"")</span>
-<p>@Quote.Source</p>
+<p>@( (MarkupString)ConvertTextUrlToLink(Quote.Source))</p>
 <hr>
 @* <p style="white-space: pre-wrap;"> @((MarkupString) Preview) </p> *@
 <p> @((MarkupString) Preview) </p>
@@ -30,14 +31,14 @@
 
 @code{
 
-    private Quote Quote = new Quote(){};
+    private Quote Quote {get;set;} = new Quote();
     [Parameter]
     public int Id {get;set;}
     public string Preview => Markdown.ToHtml(Quote.Text, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
 
     protected override async Task OnInitializedAsync()
     {
-        Quote = await DbContext.Quotes.FindAsync(Id);       
+        Quote = await DbContext.Quotes.FindAsync(Id); 
     }
 
     private void Edit()
@@ -52,5 +53,11 @@
         NavigationManager.NavigateTo("/list");
     }
 
+    private static string ConvertTextUrlToLink(string url)  
+    {  
+    string regex = @"((www\.|(http|https|ftp|news|file)+\:\/\/)[_.a-z0-9-]+\.[a-z0-9\/_:@=.+?,##%&~-]*[^.|\'|\# |!|\(|?|,| |>|<|;|\)])";  
+    Regex r = new Regex(regex, RegexOptions.IgnoreCase);  
+    return r.Replace(url, "<a href=\"$1\">$1</a>").Replace("href=\"www", "href=\"http://www");  
+    }  
 
 }
