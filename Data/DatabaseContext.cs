@@ -21,7 +21,7 @@ namespace QuoteApp.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // add your own configuration here
-            modelBuilder.HasDbFunction(typeof(DatabaseContext) .GetMethod(nameof(QuoteSearch))).HasName("udf_quote_search");
+            modelBuilder.HasDbFunction(typeof(DatabaseContext).GetMethod(nameof(QuoteSearch))).HasName("udf_quote_search");
             modelBuilder.Entity<Result>().HasNoKey();
         }
 

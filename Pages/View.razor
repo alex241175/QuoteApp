@@ -6,7 +6,7 @@
 
 <PageTitle>語錄:@Quote.Title</PageTitle>
 
-<a class="btn btn-primary" href="/">&lt;</a>
+<a class="btn btn-primary" href="/list">&lt;</a>
 <button type="button" style="float:right" class="btn btn-primary mx-2" @onclick=@Edit>修改</button>
 <button type="button" style="float:right" class="btn btn-primary" @onclick=@Delete>刪除</button>
 
@@ -49,7 +49,7 @@
     {
         DbContext.Quotes.Remove(Quote);
         await DbContext.SaveChangesAsync();
-        NavigationManager.NavigateTo("/");
+        NavigationManager.NavigateTo("/list");
     }
 
 

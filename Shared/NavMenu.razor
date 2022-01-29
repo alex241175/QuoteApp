@@ -1,4 +1,6 @@
 ﻿@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject StateContainerService stateService
+@inject NavigationManager NavigationManager
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -15,9 +17,15 @@
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 <span class="oi oi-home" aria-hidden="true"></span> 主頁
             </NavLink>
-              <NavLink class="nav-link" href="import">
+            <NavLink class="nav-link" href="import">
                 <span class="oi oi-data-transfer-upload" aria-hidden="true"></span> 上傳
             </NavLink>
+            @foreach (var t in TagsMenu) 
+            {
+                <NavLink class="hand nav-link" @onclick="()=>FilterByTag(t)">
+                    @t
+                </NavLink>
+            }
         </div>
         <div class="nav-item px-3 d-block d-sm-none">
              @if (user.Identity.Name != null){
@@ -36,6 +44,9 @@
 @code {
     private bool collapseNavMenu = true;
     private ClaimsPrincipal? user;
+
+    List<string> TagsMenu = new List<string> {"故事", "課題", "名句" };
+
     protected override async void OnInitialized()
     {
         base.OnInitialized();
@@ -48,5 +59,13 @@
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+
+    private void FilterByTag(string tag)
+    {
+        //stateService.SetTag(tag);
+        //stateService.SetQuery("");
+        //stateService.SetPage(1); 
+        NavigationManager.NavigateTo("/list?tag="+tag, forceLoad: true);
     }
 }
