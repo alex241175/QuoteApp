@@ -17,7 +17,11 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddHxServices();  
 // builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlite(builder.Configuration.GetConnectionString("SqliteDb")));
-builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("MSSQLDb")));
+builder.Services.AddDbContext<DatabaseContext>(options =>
+ options.UseSqlServer(
+     builder.Configuration.GetConnectionString("MSSQLDb"),
+     options => options.CommandTimeout((int)TimeSpan.FromMinutes(3).TotalSeconds)
+));
 builder.Services.AddScoped<StateContainerService>();
 builder.Services.AddSingleton<HelperFunction>();
 
@@ -44,8 +48,6 @@ builder.Services.AddAuthorization(config =>
 });
 
 var app = builder.Build();
-
-
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
