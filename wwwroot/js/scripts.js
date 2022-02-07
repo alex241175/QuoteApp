@@ -1,4 +1,4 @@
-var bookmark = {}
+window.bookmark = {};
 
 window.alert = function(text){
     alert(text)
@@ -49,13 +49,10 @@ window.storeBookmark = function (){
     bookmark = tinymce.activeEditor.selection.getBookmark();
 }
 
-window.moveToBookmark = function(){
-    tinymce.activeEditor.selection.moveToBookmark(bookmark);
-}
 window.insertContent = function (text){
-    // below not working. when you click outside editor, it will lose cursor
     var ed = tinyMCE.activeEditor
-    ed.execCommand('mceInsertContent', false, "some text");
+    ed.selection.moveToBookmark(bookmark);
+    ed.execCommand('mceInsertContent', false, text);
 }
 window.clipboardCopy = {
     copyText: function(text) {
