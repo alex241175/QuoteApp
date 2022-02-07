@@ -16,7 +16,9 @@
         <input type="text" class="form-control" id="title" @bind="Quote.Title" autocomplete="off">
     </div>
     <div class="form-group">
-        <TextInput Text="@Quote.Text" TextChanged="TextChanged"></TextInput>
+        @* <TextInput Text="@Quote.Text" TextChanged="TextChanged"></TextInput> *@
+        @* <TextInputHtml @ref="textInputHtml"/> *@
+        <TextInputTinyMCE Text="@Quote.Text" @ref="TinyEditor"></TextInputTinyMCE>
     </div>
     <div class="form-group">
         <label for="source" class="col-form-label">出處:</label>                            
@@ -60,10 +62,13 @@
 	}
     [Parameter]
     public int Id {get;set;}
+     // TextInputHtml textInputHtml;
+    TextInputTinyMCE TinyEditor;
 
     protected override async Task OnInitializedAsync()
     {
         Quote = await DbContext.Quotes.FindAsync(Id);
+
         if (!string.IsNullOrEmpty(Quote.Tags)){
             tagsInput = Quote.Tags.Split(",").ToList();   
         }
@@ -73,7 +78,8 @@
         if (firstRender)
         {
            //trigger oninput event of text inputbox to expand the textarea
-           await jsRuntime.InvokeVoidAsync("triggerinput", "note");  
+           await jsRuntime.InvokeVoidAsync("triggerinput", "note");
+           // textInputHtml.SetHTML(Quote.Text);
         }
     }
     private void CheckChanged()
@@ -93,6 +99,8 @@
     }
     private async Task Save()
     {
+        // Quote.Text = await textInputHtml.GetHTML();
+        Quote.Text = TinyEditor.GetContent();
         Quote.Tags = string.Join(",", tagsInput);
         DbContext.Quotes.Update(Quote);
         await DbContext.SaveChangesAsync();

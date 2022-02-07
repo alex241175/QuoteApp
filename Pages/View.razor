@@ -24,7 +24,7 @@
 <p>@( (MarkupString)ConvertTextUrlToLink(Quote.Source))</p>
 <hr>
 @* <p style="white-space: pre-wrap;"> @((MarkupString) Preview) </p> *@
-<p> @((MarkupString) Preview) </p>
+<p> @((MarkupString) Quote.Text) </p>
 <p>@Quote.Note</p>
 
 
@@ -34,7 +34,7 @@
     private Quote Quote {get;set;} = new Quote();
     [Parameter]
     public int Id {get;set;}
-    public string Preview => Markdown.ToHtml(Quote.Text, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
+    //public string Preview => Markdown.ToHtml(Quote.Text, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
 
     protected override async Task OnInitializedAsync()
     {

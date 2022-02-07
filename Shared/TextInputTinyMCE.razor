@@ -1,0 +1,121 @@
+@using TinyMCE.Blazor
+@using Chinese
+@inject DatabaseContext DbContext
+@inject IJSRuntime jsRuntime
+
+<label for="text" class="col-form-label my-2">內容:</label>
+<a class="btn btn-light btn-sm mx-2" @onclick="Beautify">整理</a>
+<a class="btn btn-light btn-sm mx-2" @onclick="ConvertTraditional">繁</a>
+<a class="btn btn-light btn-sm mx-2" @onclick="OpenQuoteLink">插入語錄</a>
+
+<Editor ApiKey='25i7f58pz09k5qfcxxmaiwnujkeku7kwoi3w61n9dmf9p5l2' Value=@Text @ref=TinyEditor 
+Conf="@editorConf" />
+
+<HxModal @ref="quoteLinkModal" Size="ModalSize.Large" Fullscreen="ModalFullscreen.MediumDown" Title="插入語錄">
+	    <BodyTemplate>
+        <HxAutosuggest Label=""
+                    Placeholder="請輸入語錄標題"
+                    TItem="Quote"
+                    TValue="int"
+                    MinimumLength="1"
+                    @bind-Value="@autosuggestValue"
+                    DataProvider="ProvideSuggestions"
+                    ValueSelector="(Quote q) => q.QuoteId"
+                    TextSelector="(Quote q) => q.Title"
+                    ItemFromValueResolver="ResolveAutosuggestItemFromValue">
+                    <ItemTemplate Context="item">@item.Title <sup>@item.QuoteId</sup></ItemTemplate>
+                    <EmptyTemplate>
+                        <span class="p-2">找不到語錄標題</span>
+                    </EmptyTemplate>
+        </HxAutosuggest>
+        <p class="mt-2">@((MarkupString)LinkText)</p>
+        @* <HxButton Text="Insert (not working yet for TinyMCE)" OnClick="InsertQuoteLink" Color="ThemeColor.Primary" /> *@
+        <HxButton Text="Get Link" OnClick="GetQuoteLink" Color="ThemeColor.Primary" />
+	</BodyTemplate>
+</HxModal>
+
+@code {
+
+    [Parameter]
+    public string Text { get; set;}
+    private Editor TinyEditor;
+    private HxModal quoteLinkModal;
+    private string LinkText = "";
+    private int autosuggestValue { get; set; }
+
+    private Dictionary<string, object> editorConf = new Dictionary<string, object>{
+        { "menubar", false },
+        { "height", 400},
+        { "toolbar_sticky",true}, 
+        { "plugins", "link code lists table paste" },
+        { "toolbar", "undo redo | paste pastetext | styleselect | forecolor | bold italic | numlist bullist | alignleft aligncenter alignright alignjustify | outdent indent | table | link | code" }
+    };
+
+    public string GetContent()
+    {
+        return TinyEditor.Value;
+    }
+
+    private async Task Beautify()
+	{
+        string text = TinyEditor.Value;
+        text = text.Replace(",","，").Replace(";","；").Replace(":","：");  // 標點輔全型
+        Text = text;
+        StateHasChanged();
+	}
+       private async Task ConvertTraditional()
+	{
+        string text = TinyEditor.Value;
+        text = ChineseConverter.ToTraditional(text);
+        Text = text;
+        StateHasChanged();
+
+	}
+    private async Task OpenQuoteLink()
+	{
+		Text = TinyEditor.Value; // persist the text entered
+        LinkText = "";
+        await quoteLinkModal.ShowAsync();
+	}
+    private async Task CloseQuoteLink()
+	{
+		await quoteLinkModal.HideAsync();
+	}
+    private async Task<AutosuggestDataProviderResult<Quote>> ProvideSuggestions(AutosuggestDataProviderRequest request)
+	{
+		await Task.Delay(400); // backend API speed simulation
+		return new AutosuggestDataProviderResult<Quote>
+		{
+			Data =  DbContext.Quotes
+				    .Where(q => q.Title.Contains(request.UserInput))
+					.OrderBy(q => q.Title).ToList()
+		};
+	}
+
+	private async Task<Quote> ResolveAutosuggestItemFromValue(int value)
+	{
+		await Task.Delay(400); // backend API speed simulation
+        Quote quote = await DbContext.Quotes.FindAsync(value);
+		return quote;
+	}
+    private async Task InsertQuoteLink()   //not working yet for TinyMCE. Cannot insert text at cursor point
+	{
+		var QuoteId = autosuggestValue;
+        var quote = DbContext.Quotes.FirstOrDefault(x => x.QuoteId == QuoteId);
+        string link = $" [{quote?.Title}](https://thequoteapp.azurewebsites.net/view/{QuoteId}) ";
+        await quoteLinkModal.HideAsync();
+        autosuggestValue = 0;
+        // await this.QuillHtml.InsertText(link);
+        StateHasChanged();
+	}
+
+     private async Task GetQuoteLink()  //work for chrome only
+	{
+		var QuoteId = autosuggestValue;
+        var quote = DbContext.Quotes.FirstOrDefault(x => x.QuoteId == QuoteId);
+        string link = $"<a href='https://thequoteapp.azurewebsites.net/view/{QuoteId}'>{quote?.Title}</a>";
+        autosuggestValue = 0;
+        LinkText = link;
+        StateHasChanged();
+	}
+}
