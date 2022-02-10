@@ -28,14 +28,27 @@
         </div>
     </div>
     <div class="form-group">
-        <HxInputTags Label="Tags" @bind-Value="tagsInput"
+        <label for="" class="col-form-label">Tags:</label>   
+        <Autocomplete TItem="Tag"
+              TValue="string"
+              Data="@tagsInputSuggestion"
+              TextField="@((item) => item.Value)"
+              ValueField="@((item) => item.Key)"
+              Placeholder=""
+              Multiple
+              FreeTyping
+              @bind-SelectedValues="tagsInput"
+              @bind-SelectedTexts="tagsInput">
+        </Autocomplete> 
+        @* <HxInputTags Label="Tags" @bind-Value="tagsInput"
               DataProvider="GetNewItemSuggestions"
-			 SuggestDelay="0"
-			 SuggestMinimumLength="0" />
+			 SuggestDelay="1000"
+			 SuggestMinimumLength="0" /> *@
+        <small class="text-muted">類別：故事 課題 語錄 名詞 資訊 經典</small>
     </div>
     <div class="form-group">
-        <label for="private" class="col-form-label">保密:</label>                            
-        <input class="form-check-input" type="checkbox" checked="@Quote.Private" @onclick="CheckChanged">
+        <label for="private" class="form-check-label">保密:</label>                            
+        <input id="private" type="checkbox" checked="@Quote.Private" @onclick="CheckChanged">
     </div>
     <div class="form-group">
         <button type="button" class="btn btn-primary" @onclick=@Save>Save</button>
@@ -46,8 +59,15 @@
 @code{
 
     private Quote Quote {get;set;} = new Quote();
-    private List<string> tagsInput = new List<string>{};        
-    private Task<InputTagsDataProviderResult> GetNewItemSuggestions(InputTagsDataProviderRequest request)
+    public class Tag{
+        public string Key {get;set;}
+        public string Value { get; set; }
+    }
+    private List<Tag> tagsInputSuggestion = new List<Tag>{};
+    List<string> tagsInput;
+    // List<string> multipleSelectionData;
+    //List<string> multipleSelectionTexts = new();
+    @* private Task<InputTagsDataProviderResult> GetNewItemSuggestions(InputTagsDataProviderRequest request)
 	{
 		string tagsLine = string.Join(",", DbContext.Quotes.Select(x => x.Tags));  //output : green,red,green,yellow
 
@@ -55,13 +75,17 @@
 		{
             Data = tagsLine.Split(",").ToList().Distinct().AsEnumerable()
 		});
-	}
+	} *@
 
     // TextInputHtml textInputHtml;
     TextInputTinyMCE TinyEditor;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        string tagsLine = string.Join(",", DbContext.Quotes.Select(x => x.Tags));  //output : green,red,green,yellow
+        tagsInputSuggestion = tagsLine.Split(",").ToList().Distinct().Select( x => new Tag { Key = x, Value = x }).ToList();
+        tagsInput = new List<string>() {};
+        await base.OnInitializedAsync();
        
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -69,7 +93,7 @@
         if (firstRender)
         {
            //trigger oninput event of text inputbox to expand the textarea
-           await jsRuntime.InvokeVoidAsync("triggerinput", "note");  
+           //await jsRuntime.InvokeVoidAsync("triggerinput", "note");  
         }
     }
 

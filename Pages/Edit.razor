@@ -31,14 +31,23 @@
         </div>
     </div>
     <div class="form-group">
-       <HxInputTags Label="Tags" @bind-Value="tagsInput"
-              DataProvider="GetNewItemSuggestions"
-			  SuggestDelay="0"
-			  SuggestMinimumLength="0" />
+        <label for="" class="col-form-label">Tags:</label>   
+        <Autocomplete TItem="Tag"
+              TValue="string"
+              Data="@tagsInputSuggestion"
+              TextField="@((item) => item.Value)"
+              ValueField="@((item) => item.Key)"
+              Placeholder=""
+              Multiple
+              FreeTyping
+              @bind-SelectedValues="tagsInput"
+              @bind-SelectedTexts="tagsInput">
+        </Autocomplete> 
+        <small class="text-muted">類別：故事 課題 語錄 名詞 資訊 經典</small>
     </div>
     <div class="form-group">
         <label for="private" class="col-form-label">保密:</label>                            
-        <input class="form-check-input" id="private" type="checkbox" checked="@Quote.Private" @onclick="CheckChanged">
+        <input id="private" type="checkbox" checked="@Quote.Private" @onclick="CheckChanged">
     </div>
     <div class="form-group mt-4">
         <button type="button" class="btn btn-primary" @onclick=@Save>Save</button>
@@ -49,9 +58,14 @@
 @code{
 
     private Quote Quote {get;set;} = new Quote();
-    private List<string> tagsInput = new List<string>{};
+    public class Tag{
+        public string Key {get;set;}
+        public string Value { get; set; }
+    }
+    private List<Tag> tagsInputSuggestion = new List<Tag>{};
+    List<string> tagsInput;
 
-	private Task<InputTagsDataProviderResult> GetNewItemSuggestions(InputTagsDataProviderRequest request)
+	@* private Task<InputTagsDataProviderResult> GetNewItemSuggestions(InputTagsDataProviderRequest request)
 	{
 		string tagsLine = string.Join(",", DbContext.Quotes.Select(x => x.Tags));  //output : green,red,green,yellow
 
@@ -59,7 +73,7 @@
 		{
             Data = tagsLine.Split(",").ToList().Distinct().AsEnumerable()
 		});
-	}
+	} *@
     [Parameter]
     public int Id {get;set;}
      // TextInputHtml textInputHtml;
@@ -68,9 +82,12 @@
     protected override async Task OnInitializedAsync()
     {
         Quote = await DbContext.Quotes.FindAsync(Id);
-
+        string tagsLine = string.Join(",", DbContext.Quotes.Select(x => x.Tags));  //output : green,red,green,yellow
+        tagsInputSuggestion = tagsLine.Split(",").ToList().Distinct().Select( x => new Tag { Key = x, Value = x }).ToList();
         if (!string.IsNullOrEmpty(Quote.Tags)){
             tagsInput = Quote.Tags.Split(",").ToList();   
+        }else{
+            tagsInput = new List<string>() {};
         }
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)

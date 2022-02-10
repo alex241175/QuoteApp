@@ -11,7 +11,32 @@
 <Editor ApiKey='25i7f58pz09k5qfcxxmaiwnujkeku7kwoi3w61n9dmf9p5l2' Value=@Text @ref=TinyEditor 
 Conf="@editorConf" />
 
-<HxModal @ref="quoteLinkModal" Size="ModalSize.Large" Fullscreen="ModalFullscreen.MediumDown" Title="插入語錄">
+<Modal @ref="quoteLinkModal">
+    <ModalContent Centered="true">
+        <ModalHeader>
+            <ModalTitle>插入語錄</ModalTitle>
+            <CloseButton />
+        </ModalHeader>
+        <ModalBody>
+            <Autocomplete TItem="Quote"
+            TValue="int"
+            Data="@quotes"
+            TextField="@(( item ) => item.Title)"
+            ValueField="@(( item ) => item.QuoteId)"
+            @bind-SelectedValue="@quoteId"
+            @bind-SelectedText="@title"
+            Placeholder="Enter title..."
+            Filter="AutocompleteFilter.StartsWith"
+            FreeTyping
+            CustomFilter="@(( item, searchValue ) => item.Title.IndexOf( searchValue, 0, StringComparison.CurrentCultureIgnoreCase ) >= 0 )">
+        </Autocomplete>
+        </ModalBody>
+        <ModalFooter>
+            <Button Color="Color.Danger" Clicked="()=> InsertQuoteLink()">插入</Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
+@* <HxModal @ref="quoteLinkModal" Size="ModalSize.Large" Fullscreen="ModalFullscreen.MediumDown" Title="插入語錄">
 	    <BodyTemplate>
         <HxAutosuggest Label=""
                     Placeholder="請輸入語錄標題"
@@ -31,16 +56,18 @@ Conf="@editorConf" />
         </HxAutosuggest>
         <HxButton Text="插入" OnClick="InsertQuoteLink" Color="ThemeColor.Primary" /> 
 	</BodyTemplate>
-</HxModal>
+</HxModal> *@
 
 @code {
 
     [Parameter]
     public string Text { get; set;}
     private Editor TinyEditor;
-    private HxModal quoteLinkModal;
-    private int autosuggestValue { get; set; }
-
+    private Modal quoteLinkModal;
+    // private int autosuggestValue { get; set; }
+    private IEnumerable<Quote> quotes {get;set;}
+    private int quoteId;
+    private string title;
     private Dictionary<string, object> editorConf = new Dictionary<string, object>{
         { "menubar", false },
         { "height", 400},
@@ -48,6 +75,10 @@ Conf="@editorConf" />
         { "plugins", "link code lists table paste" },
         { "toolbar", "undo redo | paste pastetext | styleselect | forecolor | bold italic | numlist bullist | alignleft aligncenter alignright alignjustify | outdent indent | table | link | code" }
     };
+
+     protected override async Task OnInitializedAsync(){
+            quotes = DbContext.Quotes.OrderBy(q => q.Title).ToList();
+     }
 
     public string GetContent()
     {
@@ -75,13 +106,13 @@ Conf="@editorConf" />
         Text = TinyEditor.Value; 
         //store current cursor location because when you click outside editor, lose focus
         await jsRuntime.InvokeVoidAsync("storeBookmark"); 
-        await quoteLinkModal.ShowAsync();
+        quoteLinkModal.Show();
 	}
-    private async Task CloseQuoteLink()
+    private void CloseQuoteLink()
 	{
-		await quoteLinkModal.HideAsync();
+		quoteLinkModal.Hide();
 	}
-    private async Task<AutosuggestDataProviderResult<Quote>> ProvideSuggestions(AutosuggestDataProviderRequest request)
+    @* private async Task<AutosuggestDataProviderResult<Quote>> ProvideSuggestions(AutosuggestDataProviderRequest request)
 	{
 		await Task.Delay(400); // backend API speed simulation
 		return new AutosuggestDataProviderResult<Quote>
@@ -97,15 +128,15 @@ Conf="@editorConf" />
 		await Task.Delay(400); // backend API speed simulation
         Quote quote = await DbContext.Quotes.FindAsync(value);
 		return quote;
-	}
+	} *@
     private async Task InsertQuoteLink()   //not working yet for TinyMCE. Cannot insert text at cursor point
 	{
-		var QuoteId = autosuggestValue;
-        var quote = DbContext.Quotes.FirstOrDefault(x => x.QuoteId == QuoteId);
+		var QuoteId = quoteId;
+        //var quote = DbContext.Quotes.FirstOrDefault(x => x.QuoteId == QuoteId);
         // string link = $" [{quote?.Title}](https://thequoteapp.azurewebsites.net/view/{QuoteId}) "; // for markup
-        string link = $"<a href='https://thequoteapp.azurewebsites.net/view/{QuoteId}'>{quote?.Title}</a>";
-        await quoteLinkModal.HideAsync();
-        autosuggestValue = 0;
+        string link = $"<a href='https://thequoteapp.azurewebsites.net/view/{QuoteId}'>{title}</a>";
+        quoteLinkModal.Hide();
+        // quoteId = 0;
         // await this.QuillHtml.InsertText(link);
         await jsRuntime.InvokeVoidAsync("insertContent",link);
         Text = TinyEditor.Value; // persist the value
