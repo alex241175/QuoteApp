@@ -22,7 +22,19 @@
     </div>
     <div class="form-group">
         <label for="source" class="col-form-label">出處:</label>                            
-        <input type="text" class="form-control" for="source" @bind="Quote.Source" autocomplete="off">
+        @* <input type="text" class="form-control" for="source" @bind="Quote.Source" autocomplete="off"> *@
+        <Autocomplete TItem="string"
+            TValue="string"
+            Data="@allSource"
+            TextField="@((item) => item)"
+            ValueField="@((item) => item)"
+            Placeholder=""
+            Filter="AutocompleteFilter.StartsWith"
+            CustomFilter="@(( item, searchValue ) => item.IndexOf( searchValue, 0, StringComparison.CurrentCultureIgnoreCase ) >= 0 )"
+            FreeTyping
+            @bind-SelectedValue="@Quote.Source"
+            @bind-SelectedText="@selectedSource">
+        </Autocomplete>
     </div>
     <div class="form-group">
         <label for="note" class="col-form-label">備註:</label>                            
@@ -61,6 +73,8 @@
 @code{
 
     private Quote Quote {get;set;} = new Quote();
+    private List<string>? allSource {get;set;}
+    private string selectedSource { get; set; } ="";
     public class Tag{
         public string Key {get;set;}
         public string Value { get; set; }
@@ -93,6 +107,7 @@
         }else{
             tagsInput = new List<string>() {};
         }
+        allSource = DbContext.Quotes.Select(x => x.Source).ToList().Distinct().ToList();
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -128,6 +143,7 @@
         // Quote.Text = await textInputHtml.GetHTML();
         Quote.Text = TinyEditor.GetContent();
         Quote.Tags = string.Join(",", tagsInput);
+        Quote.Source = selectedSource;
         DbContext.Quotes.Update(Quote);
         await DbContext.SaveChangesAsync();
         NavigationManager.NavigateTo("/view/"+ Id);

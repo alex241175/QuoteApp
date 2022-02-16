@@ -20,9 +20,22 @@
             </div>
             <div class="col-auto">
                 <div class="input-group">
-                    <input class="form-control mx-2" @bind="QueryString" />
-                    <button type="button" class="btn btn-light" @onclick="@Search" >查詢</button> 
-                    <button type="button" class="btn btn-light mx-2" @onclick="@Cancel">X</button>
+                    @* <input class="form-control mx-2" @bind="QueryString" /> *@
+                     <Autocomplete TItem="string"
+                        TValue="string"
+                        Data="@allTitle"
+                        TextField="@((item) => item)"
+                        ValueField="@((item) => item)"
+                        Placeholder=""
+                        Filter="AutocompleteFilter.StartsWith"
+                        CustomFilter="@(( item, searchValue ) => item.IndexOf( searchValue, 0, StringComparison.CurrentCultureIgnoreCase ) >= 0 )"
+                        FreeTyping
+                        MaxMenuHeight="400px"
+                        @bind-SelectedValue="@QueryString"
+                        @bind-SelectedText="@selectedQuery">
+                    </Autocomplete>
+                    <button type="button" class="ml-4 btn btn-light" @onclick="@Search" >查詢</button> 
+                    @* <button type="button" class="btn btn-light mx-2" @onclick="@Cancel">X</button> *@
                 </div>   
             </div>
             <div class="col-auto">
@@ -88,6 +101,8 @@
 
     private string Tag { get; set; }
     private List<Quote> Quotes = new();
+    private List<string>? allTitle {get;set;}
+    private string selectedQuery { get; set; } ="";
     private int CurrentPage = 1;
     private string Query = "";
     private int PageSize = 10;
@@ -114,6 +129,7 @@
         //stateService.OnStateChange += MyEventHandler;        
         stateService.OnFilterByTag += OnFilterByTag;  //trigger from NavMenu
         //stateService.OnReloadList += OnReloadList; //trigger from NavMenu
+        allTitle = DbContext.Quotes.Select(x => x.Title).ToList().Distinct().ToList();
 
         await LoadPage(CurrentPage);
 
@@ -234,7 +250,8 @@
         Tag = "";
         stateService.SetTag(Tag);
         CurrentPage = 1;
-        Query = QueryString;
+        //Query = QueryString;
+        Query = selectedQuery;
         stateService.SetPage(CurrentPage);
         stateService.SetQuery(Query);
         stateService.SetScrollPos(0);

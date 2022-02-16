@@ -22,7 +22,7 @@ namespace QuoteApp.Data
 
     public static class Config
     {
-        public static List<string> tagsSelection = new(){"故事", "課題", "語錄", "名詞", "資訊","經典"};
+        public static List<string> tagsSelection = new(){"故事", "課題", "語錄", "名詞", "資訊", "經典", "佛學", "儒學"};
     }
 
 }
