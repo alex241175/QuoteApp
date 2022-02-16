@@ -18,17 +18,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 // builder.Services.AddHxServices();  
-// builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlite(builder.Configuration.GetConnectionString("SqliteDb")));
-builder.Services.AddDbContext<DatabaseContext>(options =>
- options.UseSqlServer(
-    builder.Configuration.GetConnectionString("MSSQLDb")
-    //,
-    // options => { options.EnableRetryOnFailure(
-    //     maxRetryCount: 3,
-    //     maxRetryDelay: TimeSpan.FromSeconds(20),
-    //     errorNumbersToAdd: new List<int> { 4060 });
-    // }
- ));
+builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlite(builder.Configuration.GetConnectionString("SqliteDb")));
+// builder.Services.AddDbContext<DatabaseContext>(options =>  options.UseSqlServer(builder.Configuration.GetConnectionString("MSSQLDb")));
+
  builder.Services.AddBlazorise( options =>
       {
         options.ChangeTextOnKeyPress = true; // optional

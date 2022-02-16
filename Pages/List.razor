@@ -5,7 +5,7 @@
 @inject StateContainerService stateService
 @inject HelperFunction func
 @inject IJSRuntime JS
-@using MarkdownRemove
+@using System.Text.RegularExpressions
 @using Microsoft.AspNetCore.WebUtilities;  
 @using Microsoft.Extensions.Primitives;  
 @implements IDisposable
@@ -31,6 +31,11 @@
             }
             </div>
         </div>
+        <div class="row mt-2">
+             <div class="col-auto">
+             總數 : <span>@Count</span>
+             </div>
+        </div>
 
         @if (Quotes == null)
         {
@@ -38,36 +43,40 @@
         }
         else
         {
-            @foreach (var q in Quotes)
-            {
-                <div class="card mt-2">
-                    <div class="card-body">
-                        <h5 class="hand">
-                            <span @onclick="() => ViewQuote(q.QuoteId)">@q.Title</span>
-                            @if(!string.IsNullOrEmpty(q.Tags)){
-                                <small style="float:right;">
-                                @foreach (var t in q.Tags.Split(",")){
-                                    <span class="badge bg-light text-dark mx-1" @onclick="()=> FilterByTag(t)">@t</span>
+            @if(Quotes.Count == 0){
+                <p><em>無資料...</em></p>
+            }else{
+                @foreach (var q in Quotes)
+                {
+                    <div class="card mt-2">
+                        <div class="card-body">
+                            <h5 class="hand">
+                                <span @onclick="() => ViewQuote(q.QuoteId)">@q.Title</span>
+                                @if(!string.IsNullOrEmpty(q.Tags)){
+                                    <small style="float:right;">
+                                    @foreach (var t in q.Tags.Split(",")){
+                                        <span class="badge bg-light text-dark mx-1" @onclick="()=> FilterByTag(t)">@t</span>
+                                    }
+                                    </small>
                                 }
-                                </small>
-                            }
-                        </h5>
-                            <p>
-                            @if(string.IsNullOrEmpty(Query)){
-                                @if(q.Text.Length > 100){
-                                    @(markdownRemover.RemoveMarkdown(q.Text.Substring(0,100)) + "..." )
+                            </h5>
+                                <p>
+                                @if(string.IsNullOrEmpty(Query)){
+                                    @if(q.Text.Length > 100){
+                                        @(StripHTML(q.Text.Substring(0,100)) + "..." )
+                                    }else{
+                                        @(StripHTML(q.Text))                              
+                                    }
                                 }else{
-                                    @(markdownRemover.RemoveMarkdown(q.Text))                              
+                                    @((MarkupString)GetMatchedSnippet(StripHTML(q.Text), Query))
                                 }
-                            }else{
-                                @((MarkupString)GetMatchedSnippet(markdownRemover.RemoveMarkdown(q.Text), Query))
-                            }
-                            </p>
-                        
+                                </p>
+                            
+                        </div>
                     </div>
-                </div>
-            }    
-            <PaginationComponent CurrentPage="@CurrentPage" PageSize ="@PageSize" Count="@Count" PageRangeSize="@PageRangeSize" OnLoad="LoadPage"/>
+                }    
+                <PaginationComponent CurrentPage="@CurrentPage" PageSize ="@PageSize" Count="@Count" PageRangeSize="@PageRangeSize" OnLoad="LoadPage"/>
+            }
         }
     </Authorized>    
     <NotAuthorized>    
@@ -78,7 +87,7 @@
 @code{
 
     private string Tag { get; set; }
-    private List<Quote> Quotes = default!;
+    private List<Quote> Quotes = new();
     private int CurrentPage = 1;
     private string Query = "";
     private int PageSize = 10;
@@ -86,9 +95,7 @@
     private int Count = 0;
     private ClaimsPrincipal? User;
     private string? Role;
-    private string QueryString = "";
-    MarkdownRemover markdownRemover = new MarkdownRemover(); // To create a markdown remover with default options
-    
+    private string QueryString = "";   
     protected override async Task OnInitializedAsync()
     {
         @* StringValues tag;  
@@ -145,20 +152,71 @@
            quotes = quotes.Where( x => x.Tags.Contains(Tag));
        }
        if (!string.IsNullOrEmpty(Query)){
-            // quotes = quotes.Where(x => x.Title.Contains(Query) || x.Text.Contains(Query) || x.Note.Contains(Query));
-            // preprocess Query  道 但是  ＝> '"道" and "但是"'
-            var arr = Query.Split(' ').Select(s => '"' + s + '"').ToArray();    
-		    var keywords = string.Join(" and ", arr);
+            // quotes = quotes.Where(x => x.Title.Contains(Query) || x.Text.Contains(Query) || x.Note.Contains(Query));      
+
+            // method 1 : loop thru data to count relevant score
+            
+            var arrQuery = Query.Split(' ');           
+            List<Quote> result = new();
+            int count = 0;
+
+            foreach (var quote in quotes){
+
+                int score = 0;
+
+                foreach (var q in arrQuery){
+                    //Title
+                    count = new Regex(q.ToString()).Matches(quote.Title).Count;
+                    if (count> 0 ){
+                        score += count * 5;
+                    }
+                    //Source
+                    count = new Regex(q.ToString()).Matches(quote.Source).Count;
+                    if (count> 0 ){
+                        score += count;
+                    }
+                    //Text
+                    count = new Regex(q.ToString()).Matches(quote.Text).Count;
+                    if (count> 0 ){
+                        score += count;
+                    }
+                    //Note
+                    count = new Regex(q.ToString()).Matches(quote.Note).Count;
+                    if (count> 0 ){
+                        score += count;
+                    }
+                    //Tags
+                    count = new Regex(q.ToString()).Matches(quote.Tags).Count;
+                    if (count> 0 ){
+                        score += count * 5;
+                    }
+                }
+
+                if (score > 0){
+                    quote.Score = score;
+                    result.Add(quote);
+                }
+            }
+
+            quotes = result.AsQueryable();
+            quotes = quotes.OrderByDescending(x => x.Score);
+            // method 2 : make use of sql server full text search to sort result by relevance   
+		    @* 
+            var arr = Query.Split(' ').Select(s => '"' + s + '"').ToArray();             // preprocess Query  道 但是  ＝> '"道" and "但是"' 
+            var keywords = string.Join(" and ", arr);
             quotes = from q in DbContext.Quotes
                    join fts in DbContext.QuoteSearch(keywords)
                    on q.QuoteId equals fts.Key
                    orderby fts.Rank descending
-                   select q; 
+                   select q;  *@
+        }else{
+
+            quotes = quotes.OrderByDescending(x => x.QuoteId);
+
         } 
-        quotes = quotes.OrderByDescending(x => x.QuoteId);
         Count = quotes.Count();
         CurrentPage = PageNumber;      
-        Quotes = await quotes.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToListAsync();    
+        Quotes = quotes.Skip((CurrentPage - 1) * PageSize).Take(PageSize).ToList();    
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -209,8 +267,13 @@
             int count = 0;
             while (index != -1 && count < 5) {
                 int startIndex = 0;
+                int endOffset = 0;  //the offset position after the found query position
                 startIndex = (index - maxLength) < 0 ? 0 : index - maxLength;
-                result += Text.Substring(startIndex, maxLength) + "<span style='color:red'>" + q +  "</span>" + Text.Substring(index + q.Length, maxLength) + " ... "; // return match
+                result += Text.Substring(startIndex, maxLength) + "<span style='color:red'>" + q +  "</span>";
+                endOffset = Math.Min(Text.Length - index - q.Length, maxLength);
+                if (endOffset > 0 ){
+                    result += Text.Substring(index + q.Length, endOffset) + " ... "; // return match
+                }                
                 count++;
                 Text = Text.Substring(index + q.Length);
                 index = Text.IndexOf(q);
@@ -225,6 +288,11 @@
         } else{
             return result;
         }
+    }
+
+    public static string StripHTML(string input)
+    {
+        return Regex.Replace(input, "<.*?>", String.Empty);
     }
 
      public void Dispose()

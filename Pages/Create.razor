@@ -44,7 +44,10 @@
               DataProvider="GetNewItemSuggestions"
 			 SuggestDelay="1000"
 			 SuggestMinimumLength="0" /> *@
-        <small class="text-muted">類別：故事 課題 語錄 名詞 資訊 經典</small>
+         @foreach (var t in QuoteApp.Data.Config.tagsSelection){ 
+            <span class="hand badge bg-light text-dark mx-1" @onclick="()=> AddTag(t)">@t</span>
+         }
+        @* <small class="text-muted">類別：故事 課題 語錄 名詞 資訊 經典</small> *@
     </div>
     <div class="form-group">
         <label for="private" class="form-check-label">保密:</label>                            
@@ -109,6 +112,10 @@
     private void Cancel()
     {
         NavigationManager.NavigateTo("/");       
+    }
+     private void AddTag(string t){
+        tagsInput.Add(t);
+        StateHasChanged();
     }
     private async Task Save()
     {
