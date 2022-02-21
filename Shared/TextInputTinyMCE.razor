@@ -76,7 +76,7 @@ Conf="@editorConf" />
         { "toolbar", "undo redo | paste pastetext | styleselect | forecolor | bold italic | numlist bullist | alignleft aligncenter alignright alignjustify | outdent indent | table | link | code" }
     };
 
-     protected override async Task OnInitializedAsync(){
+     protected override void OnInitialized(){
             quotes = DbContext.Quotes.OrderBy(q => q.Title).ToList();
      }
 
@@ -85,14 +85,14 @@ Conf="@editorConf" />
         return TinyEditor.Value;
     }
 
-    private async Task Beautify()
+    private void Beautify()
 	{
         string text = TinyEditor.Value;
-        text = text.Replace(",","，").Replace(";","；").Replace(":","：");  // 標點輔全型
+        text = text.Replace(",","，").Replace(";","；").Replace(":","：");
         Text = text;
         StateHasChanged();
 	}
-       private async Task ConvertTraditional()
+    private void ConvertTraditional()
 	{
         string text = TinyEditor.Value;
         text = ChineseConverter.ToTraditional(text);

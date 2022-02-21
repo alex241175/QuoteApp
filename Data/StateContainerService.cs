@@ -6,6 +6,7 @@ namespace QuoteApp.Data
         public string Query {get;set;} = "";
         public string Tag {get;set;} = "";
         public int Page {get;set;} = 1;
+        public bool Compact {get;set;} = false;
         public int ScrollPos { get; set; } = 0;
 
 
@@ -37,6 +38,11 @@ namespace QuoteApp.Data
          public void SetPage(int page)
         {
             Page = page;
+            NotifyStateChanged();
+        }
+        public void SetCompact(bool compact)
+        {
+            Compact = compact;
             NotifyStateChanged();
         }
         public void SetScrollPos(int scrollpos)

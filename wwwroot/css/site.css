@@ -119,16 +119,6 @@ a, .btn-link {
     font-family: PMingLiU;
  }
 
- strong {
-    color:blue;
-  }
-
- em {
-    color:blue;
-    font-weight: bolder;
-    font-style: normal;
- }
-
  hand{
      cursor: pointer;
  }

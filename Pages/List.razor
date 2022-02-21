@@ -6,8 +6,8 @@
 @inject HelperFunction func
 @inject IJSRuntime JS
 @using System.Text.RegularExpressions
-@using Microsoft.AspNetCore.WebUtilities;  
-@using Microsoft.Extensions.Primitives;  
+@using ClosedXML.Excel
+@using System.IO
 @implements IDisposable
 
 <PageTitle>語錄：首頁</PageTitle>
@@ -43,10 +43,19 @@
                 <span class="mx-2 hand" style="float:right;" @onclick='()=> FilterByTag("")'> tag : @Tag x</span>
             }
             </div>
+            <div class="col-auto">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault" checked="@compact" @onchange="(e) => ShowCompact(e)">
+                    <label class="form-check-label" for="flexSwitchCheckDefault">Compact</label>
+                </div>
+            </div>
+            <div>
+                <button type="button" class="ml-4 btn btn-light" @onclick="@Download">下載</button> 
+            </div>
         </div>
-        <div class="row mt-2">
+        <div class="row my-2">
              <div class="col-auto">
-             總數 : <span>@Count</span>
+             總數 : <span>@Count</span> 
              </div>
         </div>
 
@@ -61,32 +70,48 @@
             }else{
                 @foreach (var q in Quotes)
                 {
-                    <div class="card mt-2">
-                        <div class="card-body">
-                            <h5 class="hand">
-                                <span @onclick="() => ViewQuote(q.QuoteId)">@q.Title</span>
-                                @if(!string.IsNullOrEmpty(q.Tags)){
-                                    <small style="float:right;">
-                                    @foreach (var t in q.Tags.Split(",")){
-                                        <span class="badge bg-light text-dark mx-1" @onclick="()=> FilterByTag(t)">@t</span>
-                                    }
-                                    </small>
-                                }
-                            </h5>
-                                <p>
-                                @if(string.IsNullOrEmpty(Query)){
-                                    @if(q.Text.Length > 100){
-                                        @(StripHTML(q.Text.Substring(0,100)) + "..." )
-                                    }else{
-                                        @(StripHTML(q.Text))                              
-                                    }
-                                }else{
-                                    @((MarkupString)GetMatchedSnippet(StripHTML(q.Text), Query))
-                                }
-                                </p>
-                            
+                    // compact view
+                    @if (compact == true && string.IsNullOrEmpty(Query)){
+                        <div class="row mt-2 px-3 py-1 hand border-bottom">
+                            <span @onclick="() => ViewQuote(q.QuoteId)">@q.Title</span>
+                            @if(!string.IsNullOrEmpty(q.Tags)){
+                            <small style="float:right;">
+                            @foreach (var t in q.Tags.Split(",")){
+                                <span class="badge bg-light text-dark mx-1" @onclick="()=> FilterByTag(t)">@t</span>
+                            }
+                            </small>
+                            }
                         </div>
-                    </div>
+                        
+                    // detailed view
+                    }else{
+                        <div class="card mt-2">
+                            <div class="card-body">
+                                <h5 class="hand">
+                                    <span @onclick="() => ViewQuote(q.QuoteId)">@q.Title</span>
+                                    @if(!string.IsNullOrEmpty(q.Tags)){
+                                        <small style="float:right;">
+                                        @foreach (var t in q.Tags.Split(",")){
+                                            <span class="badge bg-light text-dark mx-1" @onclick="()=> FilterByTag(t)">@t</span>
+                                        }
+                                        </small>
+                                    }
+                                </h5>
+                                    <p>
+                                    @if(string.IsNullOrEmpty(Query)){
+                                        @if(q.Text.Length > 100){
+                                            @(StripHTML(q.Text.Substring(0,100)) + "..." )
+                                        }else{
+                                            @(StripHTML(q.Text))                              
+                                        }
+                                    }else{
+                                        @((MarkupString)GetMatchedSnippet(StripHTML(q.Text), Query))
+                                    }
+                                    </p>
+                                
+                            </div>
+                        </div>                        
+                    }
                 }    
                 <PaginationComponent CurrentPage="@CurrentPage" PageSize ="@PageSize" Count="@Count" PageRangeSize="@PageRangeSize" OnLoad="LoadPage"/>
             }
@@ -99,19 +124,20 @@
 
 @code{
 
-    private string Tag { get; set; }
+    private string? Tag { get; set;}
     private List<Quote> Quotes = new();
     private List<string>? allTitle {get;set;}
-    private string selectedQuery { get; set; } ="";
+    private bool compact;
+    private string selectedQuery { get; set; } = "";
     private int CurrentPage = 1;
     private string Query = "";
-    private int PageSize = 10;
+    private int PageSize => compact ? 100 : 10;
     private int PageRangeSize = 2;
     private int Count = 0;
     private ClaimsPrincipal? User;
     private string? Role;
     private string QueryString = "";   
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         @* StringValues tag;  
         var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);  
@@ -126,12 +152,13 @@
         QueryString = Query;
         Tag = stateService.Tag;
         CurrentPage = stateService.Page;
+        compact = stateService.Compact;
         //stateService.OnStateChange += MyEventHandler;        
         stateService.OnFilterByTag += OnFilterByTag;  //trigger from NavMenu
         //stateService.OnReloadList += OnReloadList; //trigger from NavMenu
         allTitle = DbContext.Quotes.Select(x => x.Title).ToList().Distinct().ToList();
 
-        await LoadPage(CurrentPage);
+        LoadPage(CurrentPage);
 
         @* var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         User = authState.User;
@@ -139,10 +166,15 @@
 
     }
 
-    private async void OnFilterByTag()
+    private void ShowCompact(ChangeEventArgs e){
+        compact = (bool)e.Value ;
+        stateService.SetCompact(compact);
+        LoadPage(CurrentPage);
+    }
+    private void OnFilterByTag()
     {
         Console.WriteLine(stateService.Tag);    // can trigger
-        await FilterByTag(stateService.Tag);
+        FilterByTag(stateService.Tag);
         StateHasChanged();
         //await LoadPage(CurrentPage);  // quite a lot of unexpected tourble
     }
@@ -159,7 +191,7 @@
         await LoadPage(CurrentPage);
         StateHasChanged();
     } *@
-    private async Task LoadPage(int PageNumber){
+    private void LoadPage(int PageNumber){
         // var quotes = DbContext.Quotes.AsQueryable();
 
        var quotes = from q in DbContext.Quotes select q;
@@ -246,19 +278,25 @@
         NavigationManager.NavigateTo("/view/" + id);
     }
 
-    private async Task Search(){
-        Tag = "";
-        stateService.SetTag(Tag);
-        CurrentPage = 1;
-        //Query = QueryString;
-        Query = selectedQuery;
-        stateService.SetPage(CurrentPage);
-        stateService.SetQuery(Query);
-        stateService.SetScrollPos(0);
-        await LoadPage(CurrentPage);
+    private void Search(){
+        //this is a tag search
+        if (selectedQuery.Contains("tag:")){
+            string tag = selectedQuery.Substring(4);
+            FilterByTag(tag);
+        }else{
+            Tag = "";
+            stateService.SetTag(Tag);
+            CurrentPage = 1;
+            //Query = QueryString;
+            Query = selectedQuery;
+            stateService.SetPage(CurrentPage);
+            stateService.SetQuery(Query);
+            stateService.SetScrollPos(0);
+            LoadPage(CurrentPage);
+        }
     }
 
-     private async Task FilterByTag(string tag){
+     private void FilterByTag(string tag){
         Tag = tag;
         stateService.SetTag(Tag);
         Query = "";
@@ -266,12 +304,44 @@
         stateService.SetQuery(Query);
         CurrentPage = 1;
         stateService.SetPage(CurrentPage); 
-        await LoadPage(CurrentPage);
+        LoadPage(CurrentPage);
     }
-    private async Task Cancel(){
+    private void Cancel(){
         QueryString = "";
     }
+    private async void Download(){
+        using (var workbook = new XLWorkbook())
+        {
+            var worksheet = workbook.Worksheets.Add("Data");
+            var currentRow = 1;
+            worksheet.Cell(currentRow, 1).Value = "Id";
+            worksheet.Cell(currentRow, 2).Value = "主題";
+            worksheet.Cell(currentRow, 3).Value = "內容";
+            worksheet.Cell(currentRow, 4).Value = "出處";
+            worksheet.Cell(currentRow, 5).Value = "標記";
+            worksheet.Cell(currentRow, 6).Value = "備註";
+            foreach (var q in Quotes.OrderBy(x => x.QuoteId))
+            {
+                currentRow++;                
+                worksheet.Cell(currentRow, 1).Value = q.QuoteId;
+                worksheet.Cell(currentRow, 2).Value = q.Title;
+                worksheet.Cell(currentRow, 3).Value = q.Text;
+                worksheet.Cell(currentRow, 4).Value = q.Source;
+                worksheet.Cell(currentRow, 5).Value = q.Tags;
+                worksheet.Cell(currentRow, 6).Value = q.Note;
+                worksheet.Row(currentRow).Height = 15;
+            }
+            worksheet.Column(2).Width = 30;
+            worksheet.Column(3).Width = 90;
 
+            using (var stream = new MemoryStream())
+            {
+                workbook.SaveAs(stream);
+                var content = stream.ToArray();
+                await JS.InvokeVoidAsync("saveAsFile", $"QuoteApp_{DateTime.Now.ToString("yyyyMMdd_HHmmss")}.xlsx", Convert.ToBase64String(content));  
+            }
+        }
+    }
     private static string GetMatchedSnippet(string FullText, string Query)
     {
         const int maxLength = 10;
