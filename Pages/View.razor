@@ -1,11 +1,18 @@
 @page "/view/{id:int}"
 @inject DatabaseContext DbContext
 @inject NavigationManager NavigationManager
-@using Markdig
 @attribute [Authorize(Policy = "IsAdmin")]
 @using System.Text.RegularExpressions
 
-<PageTitle>語錄:@Quote.Title</PageTitle>
+<PageTitle>筆記本:@Quote.Title</PageTitle>
+<HeadContent>
+<meta property="og:title" content='@Quote.Title' />
+<meta property="og:description" content="" />
+<meta property="og:image" content="" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="@(NavigationManager.BaseUri)good-content" />
+<meta property="og:site_name" content="筆記本" />
+</HeadContent>
 
 <a class="btn btn-primary" href="/list">&lt;</a>
 <button type="button" style="float:right" class="btn btn-primary mx-2" @onclick=@Edit>修改</button>
@@ -26,8 +33,6 @@
 @* <p style="white-space: pre-wrap;"> @((MarkupString) Preview) </p> *@
 <p> @((MarkupString) Quote.Text) </p>
 <p>@Quote.Note</p>
-
-
 
 @code{
 
