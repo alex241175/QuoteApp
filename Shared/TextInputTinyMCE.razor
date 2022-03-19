@@ -73,7 +73,7 @@ Conf="@editorConf" />
         { "height", 400},
         { "toolbar_sticky",true}, 
         { "plugins", "link code lists table paste" },
-        { "toolbar", "undo redo | paste pastetext | styleselect | forecolor | bold italic | numlist bullist | alignleft aligncenter alignright alignjustify | outdent indent | table | link | code" }
+        { "toolbar", "undo redo | paste pastetext | styleselect | forecolor backcolor | bold underline italic | numlist bullist | alignleft aligncenter alignright alignjustify | outdent indent | table | link | code" }
     };
 
      protected override void OnInitialized(){
@@ -88,7 +88,9 @@ Conf="@editorConf" />
     private void Beautify()
 	{
         string text = TinyEditor.Value;
-        text = text.Replace(",","，").Replace(";","；").Replace(":","：").Replace("﹁","「").Replace("﹂","」").Replace("｜","—");
+        text = text.Replace(",","，").Replace(";","；").Replace(":","：").Replace("﹁","「")
+        .Replace("﹂","」").Replace("｜","—")
+        .Replace("︵","（").Replace("︶","）");
         Text = text;
         StateHasChanged();
 	}
