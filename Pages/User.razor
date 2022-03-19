@@ -1,0 +1,136 @@
+@page "/user"
+@inject DatabaseContext DbContext
+
+<PageTitle>筆記本：首頁</PageTitle>
+
+<AuthorizeView Policy= "IsAdmin">
+    <Authorized>
+        <h4>Users</h4>
+        <Button Color="Color.Primary" Clicked = "@Add">New</Button>
+        @if (users != null)
+        {
+            <table class="table mt-4">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var (u , pos) in users.Select((value, i) => (value, i)))
+                {
+                    <tr>
+                        <td>@( pos + 1 ) </td>
+                        <td class="hand" @onclick="() => Edit(u)">@u.UserName</td>
+                        <td>@u.Email</td>
+                        <td>@u.Role</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+        <Modal @ref="modalRef">
+            <ModalContent Centered="true">
+                <ModalHeader>
+                    <ModalTitle>@( user.UserId == 0 ? "New : " : "Update : " ) </ModalTitle>
+                    <CloseButton />
+                </ModalHeader>
+                <ModalBody>
+                    <Field>
+                        <FieldLabel>Name</FieldLabel>
+                        <TextEdit Placeholder="Enter Name..." @bind-Text="@user.UserName"/> 
+                    </Field>
+                    <Field>
+                        <FieldLabel>Email</FieldLabel>
+                        <TextEdit Placeholder="Enter Email..." @bind-Text="@user.Email"/> 
+                    </Field>
+                    <Field>
+                        <FieldLabel>Role</FieldLabel><br>
+                        <div class="form-check form-check-inline">
+                            <label class="form-check-label" for="inlineRadio1">User</label>
+                            <input class="form-check-input mx-2" type="radio" id="inlineRadio1" value="User" checked='@(user.Role == "User")' @onchange='(() => { user.Role = "User" ;})'>
+                        </div>
+                            <div class="form-check form-check-inline">   
+                            <label class="form-check-label" for="inlineRadio1">Admin</label>
+                            <input class="form-check-input mx-2" type="radio" id="inlineRadio1" value="Admin" checked='@(user.Role == "Admin")' @onchange='(() => { user.Role = "Admin" ;})'>
+                        </div> 
+                    </Field>   
+                </ModalBody>
+                <ModalFooter>
+                    @if (user.UserId != 0){
+                        <Button Color="Color.Danger" Clicked="()=> Remove(user)">Remove</Button>
+                    }
+                    <Button Color="Color.Secondary" Clicked="@HideModal">Close</Button>
+                    <Button Color="Color.Primary" Clicked="@Save">Save Changes</Button>
+                </ModalFooter>
+            </ModalContent>
+        </Modal> 
+    </Authorized>
+    <NotAuthorized>
+        <p>Please signed in.</p>  
+
+    </NotAuthorized>
+</AuthorizeView>
+@code{
+    private Modal modalRef;
+    private QuoteApp.Data.User user = new();
+    List<QuoteApp.Data.User> users = new();
+    protected override void OnInitialized()
+    {
+       users = DbContext.Users.ToList();
+    }
+
+    private Task HideModal()
+    {
+        return modalRef.Hide();
+    }
+    private Task Edit(QuoteApp.Data.User u)
+    {
+        user = u;
+        return modalRef.Show();
+    }
+    private async Task Save()
+    {                
+        if (user.UserId == 0)  // Add new
+        {
+            QuoteApp.Data.User newUser = new(){
+                UserName = user.UserName,
+                Email = user.Email,
+                Role  = user.Role,                
+            };           
+            await DbContext.Users.AddAsync(newUser);
+            await DbContext.SaveChangesAsync();
+            user.UserId = 0;
+            user.UserName = "";
+            user.Email = "";
+            //update client
+            users.Add(newUser);            
+            StateHasChanged();
+            modalRef.Hide();
+        }else{    //Update
+            DbContext.Users.Update(user);
+            await DbContext.SaveChangesAsync();
+            StateHasChanged();
+            modalRef.Hide();
+        }  
+       
+    }
+
+    private async Task Remove(QuoteApp.Data.User u)
+    {
+        DbContext.Users.Remove(u);
+        await DbContext.SaveChangesAsync();
+        users.Remove(u);  
+        StateHasChanged();
+        modalRef.Hide();
+      
+    }
+
+    private Task Add()
+    {
+        user = new();        
+        return modalRef.Show();
+    }
+}

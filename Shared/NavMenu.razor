@@ -20,6 +20,9 @@
             <NavLink class="nav-link" href="import">
                 <span class="oi oi-data-transfer-upload" aria-hidden="true"></span> 上傳
             </NavLink>
+            <NavLink class="nav-link" href="user">
+                <span class="oi oi-person" aria-hidden="true"></span> 人員
+            </NavLink>
             @foreach (var t in TagsMenu) 
             {
                 <NavLink class="hand nav-link" @onclick="()=>FilterByTag(t)">

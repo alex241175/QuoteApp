@@ -88,7 +88,7 @@ Conf="@editorConf" />
     private void Beautify()
 	{
         string text = TinyEditor.Value;
-        text = text.Replace(",","，").Replace(";","；").Replace(":","：");
+        text = text.Replace(",","，").Replace(";","；").Replace(":","：").Replace("﹁","「").Replace("﹂","」").Replace("｜","—");
         Text = text;
         StateHasChanged();
 	}
